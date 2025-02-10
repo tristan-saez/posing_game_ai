@@ -8,6 +8,7 @@ def getCamera(write_video=False):
     # Get the default frame width and height
     frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    size = {'width': frame_width, 'height': frame_height}
 
     # Define the codec and create VideoWriter object
     if (write_video == True):
@@ -17,7 +18,7 @@ def getCamera(write_video=False):
     else:
         out = None
 
-    return cam, out
+    return cam, size, out
 
 
 def captureCamera(cam, out):
@@ -43,7 +44,7 @@ def captureCamera(cam, out):
 
 
 def test():
-    cam, out = getCamera(write_video=True)
+    cam, size, out = getCamera(write_video=False)
     captureCamera(cam, out)
 
 
