@@ -1,10 +1,10 @@
 import cv2 as cv
 import numpy as np
-import camera_functions as cf
+from camera import Camera
 
 
 def set_constants_pose():
-    cam, size, out = cf.getCamera(write_video=False)
+    cam = Camera(write_video=False)
 
     BODY_PARTS = {"Nose": 0, "Neck": 1, "RShoulder": 2, "RElbow": 3, "RWrist": 4,
                   "LShoulder": 5, "LElbow": 6, "LWrist": 7, "RHip": 8, "RKnee": 9,
@@ -24,15 +24,16 @@ def set_constants_pose():
 
     threshold = 0.2
 
-    return cam, size, net, threshold, BODY_PARTS, POSE_PAIRS
+    return cam, net, threshold, BODY_PARTS, POSE_PAIRS
 
 
-def boucle_pose(cam, size, net, threshold, BODY_PARTS, POSE_PAIRS):
-    ret, frame = cam.read()
+def boucle_pose(cam, net, threshold, BODY_PARTS, POSE_PAIRS):
+    cam.actualize_frame()
+    frame = cam.frame
 
     photo_height = frame.shape[0]
     photo_width = frame.shape[1]
-    net.setInput(cv.dnn.blobFromImage(frame, 1.0, (size['width'], size['height']),
+    net.setInput(cv.dnn.blobFromImage(frame, 1.0, (cam.frame_width, cam.frame_height),
                                       (127.5, 127.5, 127.5), swapRB=True, crop=False))
 
     out = net.forward()
@@ -83,8 +84,8 @@ def boucle_pose(cam, size, net, threshold, BODY_PARTS, POSE_PAIRS):
 
 
 def test_pose():
-    cam, size, net, threshold, BODY_PARTS, POSE_PAIRS = set_constants_pose()
-    boucle_pose(cam, size, net, threshold, BODY_PARTS, POSE_PAIRS)
+    cam, net, threshold, BODY_PARTS, POSE_PAIRS = set_constants_pose()
+    boucle_pose(cam, net, threshold, BODY_PARTS, POSE_PAIRS)
 
 
 if __name__ == '__main__':
