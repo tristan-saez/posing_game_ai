@@ -1,10 +1,11 @@
 import cv2 as cv
 import numpy as np
 from camera import Camera
+from Keypoint import Keypoint
 
 
-def set_constants_pose():
-    cam = Camera(write_video=False)
+def set_constants_pose(folder_capture=None):
+    cam = Camera(write_video=False, folder_capture=folder_capture)
 
     BODY_PARTS = {"Nose": 0, "Neck": 1, "RShoulder": 2, "RElbow": 3, "RWrist": 4,
                   "LShoulder": 5, "LElbow": 6, "LWrist": 7, "RHip": 8, "RKnee": 9,
@@ -21,19 +22,18 @@ def set_constants_pose():
         ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]]
 
     net = cv.dnn.readNetFromTensorflow("data/graph_opt.pb")
+    net.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
 
     threshold = 0.2
 
     return cam, net, threshold, BODY_PARTS, POSE_PAIRS
 
 
-def boucle_pose(cam, net, threshold, BODY_PARTS, POSE_PAIRS):
-    cam.actualize_frame()
-    frame = cam.frame
+def ajout_squelette(frame, size, net, threshold, BODY_PARTS, POSE_PAIRS):
 
     photo_height = frame.shape[0]
     photo_width = frame.shape[1]
-    net.setInput(cv.dnn.blobFromImage(frame, 1.0, (cam.frame_width, cam.frame_height),
+    net.setInput(cv.dnn.blobFromImage(frame, 1.0, (size['width'], size['height']),
                                       (127.5, 127.5, 127.5), swapRB=True, crop=False))
 
     out = net.forward()
@@ -71,21 +71,25 @@ def boucle_pose(cam, net, threshold, BODY_PARTS, POSE_PAIRS):
             cv.ellipse(frame, points[idTo], (3, 3), 0,
                        0, 360, (0, 0, 255), cv.FILLED)
 
-    t, _ = net.getPerfProfile()
-
-    cv.imshow("Camera", frame)
-
-    # waits for user to press any key
-    # (this is necessary to avoid Python kernel form crashing)
-    cv.waitKey(0)
-
-    # closing all open windows
-    cv.destroyAllWindows()
+    return frame
 
 
 def test_pose():
-    cam, net, threshold, BODY_PARTS, POSE_PAIRS = set_constants_pose()
-    boucle_pose(cam, net, threshold, BODY_PARTS, POSE_PAIRS)
+    cam, net, threshold, BODY_PARTS, POSE_PAIRS = set_constants_pose(
+        folder_capture='capture')
+    size = {'width': cam.frame_width, 'height': cam.frame_height}
+    while True:
+        cam.actualize_frame()
+        cam.frame = ajout_squelette(
+            cam.frame, size, net, threshold, BODY_PARTS, POSE_PAIRS)
+        cam.show_frame()
+
+        # Press 'q' to exit the loop
+        if cv.waitKey(1) == ord('q'):
+            break
+
+        if cv.waitKey(1) == ord('s'):
+            cam.save_frame()
 
 
 if __name__ == '__main__':

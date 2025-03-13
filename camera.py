@@ -1,17 +1,10 @@
 import cv2
+from os import listdir
+from os.path import isfile, join
 
 
 class Camera:
-    cam = None
-    frame_width = 0
-    frame_height = 0
-    fourcc = None
-    out = None
-
-    frame = []
-    ret = None
-
-    def __init__(self, write_video=False):
+    def __init__(self, write_video=False, folder_capture='capture'):
         # Open the default camera
         self.cam = cv2.VideoCapture(0)
 
@@ -26,6 +19,14 @@ class Camera:
                                        (self.frame_width, self.frame_height))
         else:
             self.out = None
+
+        if folder_capture is not None:
+            self.folder_capture = folder_capture
+        else:
+            self.folder_capture = 'capture'
+        onlyfiles = [f for f in listdir(
+            self.folder_capture) if isfile(join(self.folder_capture, f))]
+        self.next_img_id = int(onlyfiles[-1].split('-')[1][:3])+1
 
     def __del__(self):
         self.cam.release()
@@ -50,6 +51,12 @@ class Camera:
             cv2.imshow('Camera', self.frame)
         else:
             print("No frame to display")
+
+    def save_frame(self):
+        cv2.imwrite(self.folder_capture+'/capture-' +
+                    '{0:03d}'.format(self.next_img_id)+'.png', self.frame)
+        self.next_img_id += 1
+        print('Pose saved !')
 
 
 def test():
