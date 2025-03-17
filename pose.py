@@ -20,6 +20,10 @@ def ajout_squelette(frame, detector):
 
     return frame
 
+def add_layer(frame, layer, alpha=0.4, beta=0.6, gamma=0.4):
+    new_frame = cv.addWeighted(frame, alpha, layer, beta, gamma)
+
+    return new_frame
 
 def test_pose():
     cam, detector = set_constants_pose(
