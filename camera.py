@@ -48,6 +48,7 @@ class Camera:
                 self.out.write(self.frame)
 
             # Display the captured frame
+            self.frame = cv2.flip(self.frame, 1)
             cv2.imshow('Camera', self.frame)
         else:
             print("No frame to display")

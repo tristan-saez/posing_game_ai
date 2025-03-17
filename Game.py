@@ -6,9 +6,9 @@ import random
 
 
 class Game:
-    def __init__(self, pose_time: float = 3.0, poses_folder="poses/", result_layers_folder="layers/"):
+    def __init__(self, pose_time: float = 6.0, poses_folder="poses/", result_layers_folder="layers/"):
         print("Initializing stats")
-        self.life = 3
+        self.life = 5
         self.score = 0
         self.pose_time = pose_time
         self.is_game_playing = False
@@ -22,7 +22,8 @@ class Game:
 
         self.result_layers_list = []
         for filename in os.listdir(result_layers_folder):
-            img = cv.imread(os.path.join(result_layers_folder, filename))
+            img = cv.flip(cv.imread(os.path.join(
+                result_layers_folder, filename)), 1)
             if img is not None:
                 self.result_layers_list.append(img)
 
@@ -34,6 +35,27 @@ class Game:
 
     def start_game(self):
         self.is_game_playing = True
+
+        print("Innitializing game")
+        self.current_pose = self.poses_list[0]
+        self.current_color = self.current_pose[0][0]
+        while self.is_game_playing:
+
+            self.cam.actualize_frame()
+            self.cam.frame, pose_data = p.ajout_squelette(
+                self.cam.frame, self.detector, self.point_ids)
+            self.cam.frame = p.add_layer(self.cam.frame, self.current_pose)
+            self.update_display()
+
+            if cv.waitKey(1) == ord('q'):
+                exit(0)
+
+            result = self.pose_diff(pose_data)
+            print(result)
+            if result:
+                break
+
+        self.poses_list.pop(0)
 
         print("Starting game")
         while self.is_game_playing:
@@ -53,7 +75,7 @@ class Game:
 
                 timer = time.time() - start
                 if (round(timer, 1) % 0.5) == 0:
-                    print(f"{3 - round(timer, 1)} left !")
+                    print(f"{self.pose_time - round(timer, 1)} left !")
 
             print("Checking pose !")
             # pose_data = True
@@ -88,12 +110,18 @@ class Game:
         return result
 
     def pose_diff(self, pose_data):
+        point_in = False
+        width = len(self.current_pose)
+        height = len(self.current_pose[0])
         for point in pose_data:
-            if point[0] >= 0 and point[0] < len(self.current_pose):
-                if point[1] >= 0 and point[1] < len(self.current_pose[point[0]]):
-                    color_point = self.current_pose[point[0]][point[1]]
-                    if color_point[0] == self.current_color[0] and color_point[1] == self.current_color[1] and color_point[2] == self.current_color[2]:
+            if point[1] >= 0 and point[1] < width:
+                if point[0] >= 0 and point[0] < height:
+                    point_in = True
+                    color_point = self.current_pose[point[1]][point[0]]
+                    if color_point[0] == self.current_color[0] or color_point[1] == self.current_color[1] and color_point[2] == self.current_color[2]:
                         return False
+        if len(pose_data) == 0 or point_in == False:
+            return False
         return True
 
     def display_random_layer(self):
@@ -102,7 +130,6 @@ class Game:
     def select_pose(self):
         self.current_pose = random.choice(self.poses_list)
         self.current_color = self.current_pose[0][0]
-        print(self.current_color)
 
     def update_display(self):
         self.cam.frame = cv.resize(self.cam.frame, (1150, 830))

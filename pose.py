@@ -23,8 +23,9 @@ def ajout_squelette(frame, detector, ids):
     frame = detector.findPose(frame)
     lmList, bboxInfo = detector.findPosition(frame, draw=False)
 
-    for points in ids:
-        coordinates.append((lmList[points][0], lmList[points][1]))
+    if len(lmList) != 0:
+        for points in ids:
+            coordinates.append((lmList[points][0], lmList[points][1]))
 
     return frame, coordinates
 
