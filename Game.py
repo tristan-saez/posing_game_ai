@@ -6,7 +6,7 @@ import random
 
 
 class Game:
-    def __init__(self, pose_time: float = 6.0, poses_folder="poses/", result_layers_folder="layers/"):
+    def __init__(self, pose_time: float = 8.0, poses_folder="poses/", result_layers_folder="layers/"):
         print("Initializing stats")
         self.life = 5
         self.score = 0
